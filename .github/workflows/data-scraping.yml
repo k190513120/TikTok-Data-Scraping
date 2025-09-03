@@ -1,0 +1,161 @@
+# data-scraping.yml
+name: TikTok Data Scraping with Webhook
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile_url:
+        description: 'TikTok博主主页链接/TikTok creator profile URL'
+        required: true
+        default: 'https://www.tiktok.com/@emiiicheow'
+        type: string
+      video_count:
+        description: '需要获取的视频数量/Number of videos to fetch (1-50)'
+        required: true
+        default: '5'
+        type: string
+      webhook_url:
+        description: '接收数据的webhook URL/Webhook URL to receive data'
+        required: true
+        default: 'https://your-webhook-url.com/callback'
+        type: string
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+
+jobs:
+  scrape-and-webhook:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # 设置Python环境
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      # 安装依赖
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      # 运行数据抓取脚本
+      - name: Run TikTok Data Scraping
+        env:
+          PROFILE_URL: ${{ github.event.inputs.profile_url }}
+          VIDEO_COUNT: ${{ github.event.inputs.video_count }}
+          WEBHOOK_URL: ${{ github.event.inputs.webhook_url }}
+        run: |
+          python -c "
+          import asyncio
+          import httpx
+          import os
+          import sys
+          import json
+          from datetime import datetime
+          
+          # 添加项目路径到sys.path
+          sys.path.append('${{ github.workspace }}')
+          
+          from crawlers.tiktok.web.web_crawler import TikTokWebCrawler
+          
+          async def main():
+              try:
+                  # 获取环境变量
+                  profile_url = os.environ['PROFILE_URL']
+                  video_count = int(os.environ['VIDEO_COUNT'])
+                  webhook_url = os.environ['WEBHOOK_URL']
+                  
+                  print(f'开始抓取TikTok数据...')
+                  print(f'博主链接: {profile_url}')
+                  print(f'视频数量: {video_count}')
+                  print(f'Webhook URL: {webhook_url}')
+                  
+                  # 初始化爬虫
+                  crawler = TikTokWebCrawler()
+                  
+                  # 1. 获取sec_user_id
+                  print('正在获取用户ID...')
+                  sec_user_id = await crawler.get_sec_user_id(profile_url)
+                  
+                  if not sec_user_id:
+                      raise Exception('无法获取用户ID')
+                  
+                  print(f'用户ID: {sec_user_id}')
+                  
+                  # 2. 获取用户视频数据
+                  print('正在获取视频数据...')
+                  videos_data = await crawler.fetch_user_post(
+                      secUid=sec_user_id,
+                      cursor=0,
+                      count=video_count,
+                      coverFormat=2
+                  )
+                  
+                  # 3. 准备webhook数据
+                  webhook_data = {
+                      'status': 'success',
+                      'profile_url': profile_url,
+                      'sec_user_id': sec_user_id,
+                      'video_count': video_count,
+                      'videos': videos_data,
+                      'timestamp': datetime.now().isoformat(),
+                      'source': 'github_actions'
+                  }
+                  
+                  print(f'获取到 {len(videos_data.get(\"aweme_list\", []))} 个视频')
+                  
+                  # 4. 发送到webhook
+                  print('正在发送数据到webhook...')
+                  async with httpx.AsyncClient(timeout=30.0) as client:
+                      response = await client.post(
+                          webhook_url,
+                          json=webhook_data,
+                          headers={'Content-Type': 'application/json'}
+                      )
+                      response.raise_for_status()
+                      print(f'Webhook发送成功，状态码: {response.status_code}')
+                  
+                  print('数据抓取和发送完成！')
+                  
+              except Exception as e:
+                  print(f'错误: {str(e)}')
+                  
+                  # 发送错误信息到webhook
+                  try:
+                      error_data = {
+                          'status': 'error',
+                          'error_message': str(e),
+                          'profile_url': os.environ.get('PROFILE_URL', ''),
+                          'timestamp': datetime.now().isoformat(),
+                          'source': 'github_actions'
+                      }
+                      
+                      async with httpx.AsyncClient(timeout=30.0) as client:
+                          await client.post(
+                              os.environ['WEBHOOK_URL'],
+                              json=error_data,
+                              headers={'Content-Type': 'application/json'}
+                          )
+                          print('错误信息已发送到webhook')
+                  except Exception as webhook_error:
+                      print(f'发送错误信息到webhook失败: {str(webhook_error)}')
+                  
+                  sys.exit(1)
+          
+          # 运行主函数
+          asyncio.run(main())
+          "
+      
+      # 输出完成信息
+      - name: Job completed
+        run: |
+          echo "TikTok数据抓取任务完成"
+          echo "Profile URL: ${{ github.event.inputs.profile_url }}"
+          echo "Video Count: ${{ github.event.inputs.video_count }}"
+          echo "Webhook URL: ${{ github.event.inputs.webhook_url }}"

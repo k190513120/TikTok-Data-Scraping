@@ -1,4 +1,6 @@
 from typing import List
+import httpx
+import asyncio
 
 from fastapi import APIRouter, Query, Body, Request, HTTPException  # 导入FastAPI组件
 
@@ -48,6 +50,140 @@ async def fetch_one_video(request: Request,
                                     params=dict(request.query_params),
                                     )
         raise HTTPException(status_code=status_code, detail=detail.dict())
+
+
+# 获取TikTok博主视频并发送到webhook
+@router.post("/fetch_videos_with_webhook",
+             response_model=ResponseModel,
+             summary="获取TikTok博主视频并发送到webhook/Fetch TikTok creator videos and send to webhook")
+async def fetch_videos_with_webhook(request: Request,
+                                    profile_url: str = Query(
+                                        example="https://www.tiktok.com/@emiiicheow",
+                                        description="TikTok博主主页链接/TikTok creator profile URL"),
+                                    video_count: int = Query(
+                                        default=5, ge=1, le=50,
+                                        description="需要获取的视频数量/Number of videos to fetch"),
+                                    webhook_url: str = Query(
+                                        example="https://your-webhook-url.com/callback",
+                                        description="接收数据的webhook URL/Webhook URL to receive data")):
+    """
+    # [中文]
+    ### 用途:
+    - 获取TikTok博主的视频数据并通过webhook发送结果
+    ### 参数:
+    - profile_url: TikTok博主主页链接
+    - video_count: 需要获取的视频数量 (1-50)
+    - webhook_url: 接收数据的webhook URL
+    ### 返回:
+    - 处理状态信息
+
+    # [English]
+    ### Purpose:
+    - Fetch TikTok creator video data and send results via webhook
+    ### Parameters:
+    - profile_url: TikTok creator profile URL
+    - video_count: Number of videos to fetch (1-50)
+    - webhook_url: Webhook URL to receive data
+    ### Return:
+    - Processing status information
+
+    # [示例/Example]
+    profile_url = "https://www.tiktok.com/@emiiicheow"
+    video_count = 5
+    webhook_url = "https://your-webhook-url.com/callback"
+    """
+    try:
+        # 异步处理视频获取和webhook发送
+        asyncio.create_task(_process_videos_and_webhook(profile_url, video_count, webhook_url))
+        
+        return ResponseModel(code=200,
+                             router=request.url.path,
+                             data={
+                                 "status": "processing",
+                                 "message": "视频数据获取任务已启动，结果将通过webhook发送/Video data fetching task started, results will be sent via webhook",
+                                 "profile_url": profile_url,
+                                 "video_count": video_count,
+                                 "webhook_url": webhook_url
+                             })
+    except Exception as e:
+        status_code = 400
+        detail = ErrorResponseModel(code=status_code,
+                                    router=request.url.path,
+                                    params=dict(request.query_params),
+                                    )
+        raise HTTPException(status_code=status_code, detail=detail.dict())
+
+
+async def _process_videos_and_webhook(profile_url: str, video_count: int, webhook_url: str):
+    """
+    异步处理视频获取和webhook发送的内部函数
+    Internal function to process video fetching and webhook sending asynchronously
+    """
+    try:
+        # 1. 获取sec_user_id
+        sec_user_id = await TikTokWebCrawler.get_sec_user_id(profile_url)
+        
+        if not sec_user_id:
+            await _send_webhook_error(webhook_url, "Failed to get sec_user_id from profile URL")
+            return
+        
+        # 2. 获取用户视频数据
+        videos_data = await TikTokWebCrawler.fetch_user_post(
+            secUid=sec_user_id,
+            cursor=0,
+            count=video_count,
+            coverFormat=2
+        )
+        
+        # 3. 准备webhook数据
+        webhook_data = {
+            "status": "success",
+            "profile_url": profile_url,
+            "sec_user_id": sec_user_id,
+            "video_count": video_count,
+            "videos": videos_data,
+            "timestamp": asyncio.get_event_loop().time()
+        }
+        
+        # 4. 发送到webhook
+        await _send_webhook_data(webhook_url, webhook_data)
+        
+    except Exception as e:
+        # 发送错误信息到webhook
+        await _send_webhook_error(webhook_url, f"Error processing videos: {str(e)}")
+
+
+async def _send_webhook_data(webhook_url: str, data: dict):
+    """
+    发送数据到webhook
+    Send data to webhook
+    """
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                webhook_url,
+                json=data,
+                headers={"Content-Type": "application/json"}
+            )
+            response.raise_for_status()
+    except Exception as e:
+        print(f"Failed to send webhook data: {e}")
+
+
+async def _send_webhook_error(webhook_url: str, error_message: str):
+    """
+    发送错误信息到webhook
+    Send error message to webhook
+    """
+    try:
+        error_data = {
+            "status": "error",
+            "error_message": error_message,
+            "timestamp": asyncio.get_event_loop().time()
+        }
+        await _send_webhook_data(webhook_url, error_data)
+    except Exception as e:
+        print(f"Failed to send webhook error: {e}")
 
 
 # 获取用户的个人信息
