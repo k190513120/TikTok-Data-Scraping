@@ -36,11 +36,11 @@ RUN useradd --create-home --shell /bin/bash app \
 USER app
 
 # 暴露端口
-EXPOSE 80
+EXPOSE 8000
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-80}/docs || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/docs || exit 1
 
 # 设置容器启动命令
 CMD ["python3", "start.py"]

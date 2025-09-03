@@ -11,13 +11,13 @@ services:
     
     # 端口配置
     ports:
-      - port: 80
+      - port: 8000
         protocol: http
     
     # 环境变量配置
     env:
       - name: PORT
-        value: "80"
+        value: "8000"
       - name: HOST
         value: "0.0.0.0"
       - name: PYTHONUNBUFFERED
@@ -33,7 +33,7 @@ services:
     health_check:
       http:
         path: /docs
-        port: 80
+        port: 8000
       initial_delay_seconds: 30
       period_seconds: 10
       timeout_seconds: 5
@@ -54,7 +54,7 @@ services:
     # 路由配置
     routes:
       - path: /
-        port: 80
+        port: 8000
 
 # 全局配置
 name: douyin-tiktok-api

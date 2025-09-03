@@ -41,7 +41,7 @@
 #### 步骤3：配置服务
 1. **服务名称**: `tiktok-api`
 2. **构建方式**: 选择 "Dockerfile"
-3. **端口配置**: 80
+3. **端口配置**: 8000
 4. **实例类型**: Nano（免费层）
 5. **区域选择**: 根据目标用户选择最近的区域
    - 亚洲用户：Singapore (sin)
@@ -53,7 +53,7 @@
 
 **基础配置**:
 ```
-PORT=80
+PORT=8000
 HOST=0.0.0.0
 PYTHONUNBUFFERED=1
 API_HOST=0.0.0.0
@@ -70,7 +70,7 @@ API_HOST=0.0.0.0
 
 #### 步骤5：健康检查配置
 - **Health Check Path**: `/docs`
-- **Port**: 80
+- **Port**: 8000
 - **Initial Delay**: 30秒
 - **Timeout**: 5秒
 - **Interval**: 10秒
@@ -122,8 +122,8 @@ koyeb service create tiktok-api-service \
   --git-branch main \
   --git-build-command "docker build -t app ." \
   --git-run-command "python3 start.py" \
-  --ports 80:http \
-  --routes /:80 \
+  --ports 8000:http \
+  --routes /:8000 \
   --instance-type nano \
   --regions fra \
   --min-scale 1 \
@@ -134,7 +134,7 @@ koyeb service create tiktok-api-service \
 ```bash
 # 设置基础环境变量
 koyeb service update tiktok-api-service \
-  --env PORT=80 \
+  --env PORT=8000 \
   --env HOST=0.0.0.0 \
   --env PYTHONUNBUFFERED=1 \
   --env API_HOST=0.0.0.0
@@ -152,7 +152,7 @@ koyeb service update tiktok-api-service \
 # 更新服务健康检查配置
 koyeb service update tiktok-api-service \
   --health-check-http-path "/docs" \
-  --health-check-http-port 80 \
+  --health-check-http-port 8000 \
   --health-check-grace-period 30s \
   --health-check-interval 10s \
   --health-check-restart-limit 3 \
@@ -251,7 +251,7 @@ koyeb service update tiktok-api-service --env NEW_VAR-
 
 # 批量更新环境变量
 koyeb service update tiktok-api-service \
-  --env PORT=80 \
+  --env PORT=8000 \
   --env HOST=0.0.0.0 \
   --env DEBUG=false
 ```
@@ -323,7 +323,7 @@ koyeb service describe tiktok-api-service --output json | jq '.scaling'
 koyeb service describe tiktok-api-service --output json | jq '.public_domain'
 
 # 添加自定义域名
-koyeb service update tiktok-api-service --routes "yourdomain.com/:80"
+koyeb service update tiktok-api-service --routes "yourdomain.com/:8000"
 
 # 查看路由配置
 koyeb service describe tiktok-api-service --output json | jq '.routes'
@@ -335,7 +335,7 @@ koyeb service describe tiktok-api-service --output json | jq '.routes'
 
 | 变量名 | 说明 | 示例值 |
 |--------|------|--------|
-| `PORT` | 服务端口 | `80` |
+| `PORT` | 服务端口 | `8000` |
 | `HOST` | 绑定地址 | `0.0.0.0` |
 | `PYTHONUNBUFFERED` | Python输出缓冲 | `1` |
 | `TIKTOK_COOKIES` | TikTok访问Cookie | `sessionid=xxx;...` |
