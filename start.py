@@ -39,8 +39,21 @@ import uvicorn
 import os
 
 if __name__ == '__main__':
-    # Render平台会设置PORT环境变量
-    port = int(os.environ.get('PORT', Host_Port))
+    # 获取环境变量PORT，优先使用环境变量
+    env_port = os.environ.get('PORT')
+    
+    # 调试信息：显示环境变量和配置值
+    print(f"Environment PORT: {env_port}")
+    print(f"Config Host_Port: {Host_Port}")
+    
+    # 端口优先级：环境变量PORT > config.yaml中的Host_Port
+    if env_port:
+        port = int(env_port)
+        print(f"Using environment PORT: {port}")
+    else:
+        port = Host_Port
+        print(f"Using config Host_Port: {port}")
+    
     # 确保绑定到0.0.0.0以接受外部连接
     host = '0.0.0.0'
     
