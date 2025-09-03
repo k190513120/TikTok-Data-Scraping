@@ -111,13 +111,13 @@ create_service() {
             --git-branch $GIT_BRANCH \
             --git-build-command "docker build -t app ." \
             --git-run-command "python3 start.py" \
-            --ports 8000:http \
-            --routes /:8000 \
+            --ports 80:http \
+            --routes /:80 \
             --instance-type $INSTANCE_TYPE \
             --regions $REGION \
             --min-scale 1 \
             --max-scale 1 \
-            --env PORT=8000 \
+            --env PORT=80 \
             --env HOST=0.0.0.0 \
             --env PYTHONUNBUFFERED=1 \
             --env API_HOST=0.0.0.0 \
@@ -130,7 +130,7 @@ create_service() {
 update_service() {
     print_info "更新服务配置"
     koyeb service update $SERVICE_NAME \
-        --env PORT=8000 \
+        --env PORT=80 \
         --env HOST=0.0.0.0 \
         --env PYTHONUNBUFFERED=1 \
         --env API_HOST=0.0.0.0 \
