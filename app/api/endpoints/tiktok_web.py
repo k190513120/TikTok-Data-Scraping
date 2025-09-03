@@ -119,21 +119,27 @@ async def _process_videos_and_webhook(profile_url: str, video_count: int, webhoo
     异步处理视频获取和webhook发送的内部函数
     Internal function to process video fetching and webhook sending asynchronously
     """
+    print(f"[DEBUG] 开始处理异步任务: profile_url={profile_url}, video_count={video_count}")
     try:
         # 1. 获取sec_user_id
+        print(f"[DEBUG] 正在获取sec_user_id...")
         sec_user_id = await TikTokWebCrawler.get_sec_user_id(profile_url)
+        print(f"[DEBUG] 获取到sec_user_id: {sec_user_id}")
         
         if not sec_user_id:
+            print(f"[ERROR] 获取sec_user_id失败")
             await _send_webhook_error(webhook_url, "Failed to get sec_user_id from profile URL")
             return
         
         # 2. 获取用户视频数据
+        print(f"[DEBUG] 正在获取用户视频数据...")
         videos_data = await TikTokWebCrawler.fetch_user_post(
             secUid=sec_user_id,
             cursor=0,
             count=video_count,
             coverFormat=2
         )
+        print(f"[DEBUG] 获取视频数据结果: {type(videos_data)}, 数据长度: {len(str(videos_data)) if videos_data else 0}")
         
         # 3. 准备webhook数据
         webhook_data = {
@@ -146,9 +152,12 @@ async def _process_videos_and_webhook(profile_url: str, video_count: int, webhoo
         }
         
         # 4. 发送到webhook
+        print(f"[DEBUG] 正在发送数据到webhook...")
         await _send_webhook_data(webhook_url, webhook_data)
+        print(f"[DEBUG] 异步任务完成")
         
     except Exception as e:
+        print(f"[ERROR] 异步任务执行出错: {str(e)}")
         # 发送错误信息到webhook
         await _send_webhook_error(webhook_url, f"Error processing videos: {str(e)}")
 
