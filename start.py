@@ -36,6 +36,13 @@
 
 from app.main import Host_IP, Host_Port
 import uvicorn
+import os
 
 if __name__ == '__main__':
-    uvicorn.run('app.main:app', host=Host_IP, port=Host_Port, reload=True, log_level="info")
+    # Render平台会设置PORT环境变量
+    port = int(os.environ.get('PORT', Host_Port))
+    # 确保绑定到0.0.0.0以接受外部连接
+    host = '0.0.0.0'
+    
+    print(f"Starting server on {host}:{port}")
+    uvicorn.run('app.main:app', host=host, port=port, reload=False, log_level="info")

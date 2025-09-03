@@ -1,0 +1,67 @@
+# Koyeb部署配置文件
+# 用于Douyin_TikTok_Download_API项目的Koyeb平台部署
+
+services:
+  - name: tiktok-api
+    type: web
+    # 使用Docker构建
+    build:
+      type: docker
+      dockerfile: Dockerfile
+    
+    # 端口配置
+    ports:
+      - port: 80
+        protocol: http
+    
+    # 环境变量配置
+    env:
+      - name: PORT
+        value: "80"
+      - name: HOST
+        value: "0.0.0.0"
+      - name: PYTHONUNBUFFERED
+        value: "1"
+      # TikTok相关配置（需要在Koyeb控制台设置）
+      - name: TIKTOK_COOKIES
+        from: secret
+        name: TIKTOK_COOKIES
+      - name: API_HOST
+        value: "0.0.0.0"
+    
+    # 健康检查配置
+    health_check:
+      http:
+        path: /docs
+        port: 80
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+      failure_threshold: 3
+    
+    # 资源配置
+    instance_type: nano  # 免费层级
+    
+    # 自动扩缩容配置
+    autoscaling:
+      min_scale: 1
+      max_scale: 1  # 免费层限制为1个实例
+    
+    # 区域配置（选择离目标用户最近的区域）
+    regions:
+      - fra  # 法兰克福
+    
+    # 路由配置
+    routes:
+      - path: /
+        port: 80
+
+# 全局配置
+name: douyin-tiktok-api
+description: "TikTok和抖音视频下载API服务"
+
+# 部署策略
+deployment:
+  strategy: rolling_update
+  max_unavailable: 0
+  max_surge: 1

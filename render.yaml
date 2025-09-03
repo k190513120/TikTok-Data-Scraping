@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: douyin-tiktok-api
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: oregon
+    branch: main
+    healthCheckPath: /docs
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PORT
+        value: "10000"
+      - key: HOST_IP
+        value: "0.0.0.0"
+      - key: ENVIRONMENT
+        value: "production"
+    buildCommand: ""
+    startCommand: "python3 start.py"
+    autoDeploy: true
+    disk:
+      name: data
+      mountPath: /app/download
+      sizeGB: 1
