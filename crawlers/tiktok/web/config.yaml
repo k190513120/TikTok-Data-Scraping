@@ -1,7 +1,7 @@
 TokenManager:
   tiktok:
     headers:
-      User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36
+      User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36
       Referer: https://www.tiktok.com/
       # 你唯一需要修改的地方就是这里的Cookie，然后保存后重启程序即可。
         # The only place you need to modify is the Cookie here, and then save and restart the program.

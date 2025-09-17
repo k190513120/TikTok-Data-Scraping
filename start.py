@@ -38,24 +38,25 @@ from app.main import Host_IP, Host_Port
 import uvicorn
 import os
 
-if __name__ == '__main__':
-    # 获取环境变量PORT，优先使用环境变量
-    env_port = os.environ.get('PORT')
+if __name__ == "__main__":
+    # 强制使用配置文件中的端口，忽略环境变量 PORT
+    # 这是为了解决 Koyeb 平台强制设置 PORT=80 导致权限拒绝的问题
+    port = Host_Port
     
-    # 调试信息：显示环境变量和配置值
-    print(f"Environment PORT: {env_port}")
+    print(f"Environment PORT: {os.environ.get('PORT', 'Not set')}")
     print(f"Config Host_Port: {Host_Port}")
+    print(f"Force using config port: {port} (ignoring environment PORT)")
+    print(f"Starting server on {Host_IP}:{port}")
     
-    # 端口优先级：环境变量PORT > config.yaml中的Host_Port
-    if env_port:
-        port = int(env_port)
-        print(f"Using environment PORT: {port}")
-    else:
-        port = Host_Port
-        print(f"Using config Host_Port: {port}")
-    
-    # 确保绑定到0.0.0.0以接受外部连接
-    host = '0.0.0.0'
-    
-    print(f"Starting server on {host}:{port}")
-    uvicorn.run('app.main:app', host=host, port=port, reload=False, log_level="info")
+    try:
+        uvicorn.run(
+            "app.main:app",
+            host=Host_IP,
+            port=port,
+            reload=False,
+            access_log=True,
+            log_level="info"
+        )
+    except Exception as e:
+        print(f"Failed to start server: {e}")
+        sys.exit(1)
