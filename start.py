@@ -37,15 +37,15 @@
 from app.main import Host_IP, Host_Port
 import uvicorn
 import os
+import sys
 
 if __name__ == "__main__":
-    # 强制使用配置文件中的端口，忽略环境变量 PORT
-    # 这是为了解决 Koyeb 平台强制设置 PORT=80 导致权限拒绝的问题
-    port = Host_Port
+    # 优先使用环境变量 PORT（适配 Render 等云平台），否则使用配置文件端口
+    port = int(os.environ.get('PORT', Host_Port))
     
     print(f"Environment PORT: {os.environ.get('PORT', 'Not set')}")
     print(f"Config Host_Port: {Host_Port}")
-    print(f"Force using config port: {port} (ignoring environment PORT)")
+    print(f"Using port: {port}")
     print(f"Starting server on {Host_IP}:{port}")
     
     try:
