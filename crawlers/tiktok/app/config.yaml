@@ -6,5 +6,5 @@ TokenManager:
       Cookie: CykaBlyat=XD
 
     proxies:
-      http:
-      https:
+      http: http://wewlsula:1bqpuespwj48@142.111.48.253:7030
+      https: http://wewlsula:1bqpuespwj48@142.111.48.253:7030
