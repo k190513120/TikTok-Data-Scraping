@@ -9,8 +9,8 @@ TokenManager:
 
 
     proxies:
-      http: http://wewlsula:1bqpuespwj48@142.111.67.146:5611/
-      https: http://wewlsula:1bqpuespwj48@142.111.67.146:5611/ 
+      http: http://wewlsula:1bqpuespwj48@9.142.214.5:6670/
+      https: http://wewlsula:1bqpuespwj48@9.142.214.5:6670/ 
 
     msToken:
         # 不要修改下面的内容。
